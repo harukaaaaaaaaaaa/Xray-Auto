@@ -4,7 +4,7 @@
 > 🚀 **VLESS + Reality + Vision + Intelligent SNI + System Optimization** > 一个轻量级、自动化、高稳定性的 Xray 部署脚本。
 
 ![License](https://img.shields.io/github/license/accforeve/Xray-Auto)
-![Version](https://img.shields.io/badge/version-v0.6.1-green)
+![Version](https://img.shields.io/badge/version-v0.1-green)
 ![Shell](https://img.shields.io/badge/language-Bash-blue)
 
 ## 📖 简介 | Introduction
