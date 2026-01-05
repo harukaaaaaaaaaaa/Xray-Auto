@@ -1,4 +1,4 @@
-## Xray Auto Installer
+# Xray Auto Installer
 
 > 🚀 **VLESS + Reality + Vision + Intelligent SNI + System Optimization** > 一个轻量级、自动化、高稳定性的 Xray 部署脚本。
 
