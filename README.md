@@ -9,7 +9,7 @@
 
 <a name="chinese"></a>
 ## 🇨🇳 中文说明
-这是一个全自动化的 Xray 部署脚本，基于 **VLESS + Reality + XTLS-Vision/(xhttp)** 顶尖流控协议。专为 Debian 和 Ubuntu 系统设计，提供极致的性能优化与安全防护。
+这是一个全自动化的 Xray 部署脚本，基于 **VLESS + Reality-Vision/(xhttp)** 顶尖流控协议。专为 Debian 和 Ubuntu 系统设计，提供极致的性能优化与安全防护。
 
 * 版本: v0.1 Final
 * 核心: Xray-core (VLESS + Reality)
@@ -17,7 +17,7 @@
  
 ### ✨ 核心功能
 
-* **⚡️ 极速协议**: 部署最新的 VLESS + Reality + XTLS-Vision/xhttp 流控组合。
+* **⚡️ 极速协议**: 部署最新的 VLESS + Reality-Vision/xhttp 流控组合。
 * **🧠 智能 SNI 优选**: 自动测试并选择延迟最低的大厂域名（Apple, Microsoft 等）作为伪装目标，拒绝卡顿。
 * **🛡️ 独家防火墙策略**: 采用 **白名单模式** (Whitelist)，默认拒绝所有非必要端口，隐藏服务器指纹。
 * **🔄 一键回国模式切换**: 独有的 `mode` 指令，支持一键切换 **阻断回国 (Block CN)** 或 **允许回国 (Allow CN)** 流量。
@@ -86,14 +86,14 @@ bash <(curl -sL https://raw.githubusercontent.com/accforeve/Xray-Auto/main/remov
 
 <a name="English"></a>
 ## 🇺🇸 English Description
-An advanced, fully automated deployment script for Xray, featuring VLESS + Reality + XTLS-Vision. Designed for performance, security, and ease of use on Debian and Ubuntu systems.
+An advanced, fully automated deployment script for Xray, featuring VLESS + Reality-Vision. Designed for performance, security, and ease of use on Debian and Ubuntu systems.
 
 * Version: v0.1
 * Core: Xray-core (VLESS + Reality)  
 * Protocols: TCP-Vision (Primary) + xhttp (Secondary/Fallback)（v0.2+)
 
 ### ✨ Key Features
- * ⚡️ Cutting-edge Protocol: Deploys VLESS + Reality + XTLS-Vision flow control.
+ * ⚡️ Cutting-edge Protocol: Deploys VLESS + Reality-Vision/xhttp flow control.
  * 🧠 Intelligent SNI Selection: Automatically pings and selects the fastest domain (e.g., Apple, Microsoft) for camouflage to ensure stability.
  * 🛡️ Advanced Security: Uses iptables Whitelist Mode by default, blocking all unauthorized ports to hide server fingerprint.
  * 🔄 One-Key Routing Switch: Exclusive mode command to toggle between Block CN (Block China Traffic) and Allow CN (Allow China Traffic).
