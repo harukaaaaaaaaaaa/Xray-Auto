@@ -3,11 +3,11 @@
 # Project: Xray Auto Installer
 # Author: accforeve
 # Repository: https://github.com/accforeve/Xray-Auto
-# Version: v0.1 Final
+# Version: v0.2 VLESS+reality-Vision/xhttp
 # ==============================================================
 
 if [[ $EUID -ne 0 ]]; then
-    echo -e "\033[31m❌ 错误：请使用 root 权限运行此脚本。\033[0m"
+    echo "Error: This script must be run as root!"
     exit 1
 fi
 
@@ -24,19 +24,14 @@ dpkg --configure -a
 timedatectl set-timezone Asia/Shanghai
 export DEBIAN_FRONTEND=noninteractive
 
-echo "📦 更新系统并安装依赖 (此过程可能需要几分钟)..."
-# 系统升级：遇到配置冲突自动保留旧配置
+echo "📦 更新系统并安装依赖..."
 apt-get update -qq
 apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
-
-# 安装核心依赖
-# 加入 Dpkg Options 防止 sudo 等软件安装时弹出询问窗口
 DEPENDENCIES="curl wget sudo nano git htop tar unzip socat fail2ban rsyslog chrony iptables qrencode iptables-persistent"
 apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" $DEPENDENCIES
 
-# 二次检查
 if ! command -v fail2ban-client &> /dev/null; then
-    echo -e "\033[31m❌ 严重错误：软件安装失败。可能是网络源问题，请重试。\033[0m"
+    echo "软件安装失败，请检查网络源。"
     exit 1
 fi
 
@@ -44,23 +39,20 @@ fi
 echo "⚙️ 正在执行系统内核优化..."
 timedatectl set-timezone Asia/Shanghai
 
-# 智能 Swap 设置
 RAM_MB=$(free -m | grep Mem | awk '{print $2}')
 if [ "$RAM_MB" -lt 2048 ] && ! grep -q "/swapfile" /etc/fstab; then
-    echo "  - 检测到内存 < 2G，正在创建 1GB Swap..."
+    echo "  - 创建 1GB Swap..."
     fallocate -l 1G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=1024 status=none
     chmod 600 /swapfile && mkswap /swapfile >/dev/null 2>&1 && swapon /swapfile >/dev/null 2>&1
     echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
 
-# BBR 开启
 if ! grep -q "tcp_congestion_control=bbr" /etc/sysctl.conf; then
     echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
     echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
     sysctl -p > /dev/null 2>&1
 fi
 
-# 日志限制
 if ! grep -q "SystemMaxUse=200M" /etc/systemd/journald.conf; then
     echo "SystemMaxUse=200M" >> /etc/systemd/journald.conf
     systemctl restart systemd-journald
@@ -75,7 +67,6 @@ wget -q -O /usr/local/share/xray/geosite.dat https://github.com/Loyalsoldier/v2r
 # --- 4. 生成配置 ---
 XRAY_BIN="/usr/local/bin/xray"
 
-# === 智能 SNI 优选逻辑 ===
 echo "🔍 正在进行智能 SNI 优选..."
 DOMAINS=("www.icloud.com" "www.apple.com" "itunes.apple.com" "learn.microsoft.com" "www.microsoft.com" "www.bing.com")
 BEST_MS=9999
@@ -98,7 +89,7 @@ echo ""
 
 if [ -z "$BEST_DOMAIN" ]; then BEST_DOMAIN="www.icloud.com"; fi
 SNI_HOST="$BEST_DOMAIN"
-echo -e "✅ 优选结果: \033[36m$SNI_HOST\033[0m (延迟: ${BEST_MS}ms)"
+echo "✅ 优选结果: $SNI_HOST (延迟: ${BEST_MS}ms)"
 
 echo "🔑 正在生成身份凭证..."
 UUID=$($XRAY_BIN uuid)
@@ -106,6 +97,7 @@ KEYS=$($XRAY_BIN x25519)
 PRIVATE_KEY=$(echo "$KEYS" | grep "Private" | awk '{print $2}')
 PUBLIC_KEY=$(echo "$KEYS" | grep -E "Public|Password" | awk '{print $2}')
 SHORT_ID=$(openssl rand -hex 8)
+XHTTP_PATH="/req"
 
 mkdir -p /usr/local/etc/xray/
 cat > /usr/local/etc/xray/config.json <<CONFIG_EOF
@@ -114,6 +106,7 @@ cat > /usr/local/etc/xray/config.json <<CONFIG_EOF
   "dns": { "servers": [ "1.1.1.1", "8.8.8.8", "localhost" ] },
   "inbounds": [
     {
+      "tag": "vision_node",
       "port": 443,
       "protocol": "vless",
       "settings": {
@@ -123,6 +116,29 @@ cat > /usr/local/etc/xray/config.json <<CONFIG_EOF
       "streamSettings": {
         "network": "tcp",
         "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "${SNI_HOST}:443",
+          "serverNames": [ "${SNI_HOST}" ],
+          "privateKey": "${PRIVATE_KEY}",
+          "shortIds": [ "${SHORT_ID}" ],
+          "fingerprint": "chrome"
+        }
+      },
+      "sniffing": { "enabled": true, "destOverride": [ "http", "tls", "quic" ], "routeOnly": true }
+    },
+    {
+      "tag": "xhttp_node",
+      "port": 8443,
+      "protocol": "vless",
+      "settings": {
+        "clients": [ { "id": "${UUID}", "flow": "" } ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "reality",
+        "xhttpSettings": { "path": "${XHTTP_PATH}" },
         "realitySettings": {
           "show": false,
           "dest": "${SNI_HOST}:443",
@@ -156,7 +172,6 @@ systemctl daemon-reload
 sed -i 's/^#SystemMaxUse=/SystemMaxUse=200M/g' /etc/systemd/journald.conf
 systemctl restart systemd-journald
 
-# 生成自动更新 GeoIP 脚本
 echo -e "#!/bin/bash\nwget -q -O /usr/local/share/xray/geoip.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat\nwget -q -O /usr/local/share/xray/geosite.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat\nsystemctl restart xray" > /usr/local/bin/update_geoip.sh && chmod +x /usr/local/bin/update_geoip.sh
 (crontab -l 2>/dev/null; echo "0 4 * * 2 /usr/local/bin/update_geoip.sh >/dev/null 2>&1") | sort -u | crontab -
 
@@ -170,8 +185,8 @@ iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -p icmp -j ACCEPT
 iptables -A INPUT -p tcp --dport "$SSH_PORT" -j ACCEPT
-iptables -A INPUT -p tcp --dport 443 -j ACCEPT
-iptables -A INPUT -p udp --dport 443 -j ACCEPT
+iptables -A INPUT -p tcp -m multiport --dports 443,8443 -j ACCEPT
+iptables -A INPUT -p udp -m multiport --dports 443,8443 -j ACCEPT
 iptables -P INPUT DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT ACCEPT
@@ -240,36 +255,52 @@ chmod +x /usr/local/bin/mode
 systemctl enable xray && systemctl restart xray
 
 # --- 6. 结果输出 ---
-# 使用 Cloudflare 获取 IP，防止 ip.sb 出现 403 错误
 IPV4=$(curl -s4m 5 https://1.1.1.1/cdn-cgi/trace | grep "ip=" | cut -d= -f2)
 if [ -z "$IPV4" ]; then IPV4=$(curl -s4m 5 https://api.ipify.org); fi
-
 HOST_TAG=$(hostname | tr ' ' '.')
 [ -z "$HOST_TAG" ] && HOST_TAG="XrayServer"
-LINK="vless://${UUID}@${IPV4}:443?security=reality&encryption=none&pbk=${PUBLIC_KEY}&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=${SNI_HOST}&sid=${SHORT_ID}#${HOST_TAG}"
+
+LINK_VISION="vless://${UUID}@${IPV4}:443?security=reality&encryption=none&pbk=${PUBLIC_KEY}&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=${SNI_HOST}&sid=${SHORT_ID}#${HOST_TAG}_Vision"
+LINK_XHTTP="vless://${UUID}@${IPV4}:8443?security=reality&encryption=none&pbk=${PUBLIC_KEY}&headerType=none&fp=chrome&type=xhttp&path=${XHTTP_PATH}&sni=${SNI_HOST}&sid=${SHORT_ID}#${HOST_TAG}_xhttp"
+
+# 定义颜色变量
+GREEN="\033[32m"
+RED="\033[31m"
+YELLOW="\033[33m"
+BLUE="\033[36m"
+PLAIN="\033[0m"
 
 echo ""
 echo "=========================================================="
-echo -e "           \033[32m🚀 部署完成 (v0.1 Final)\033[0m"
+echo -e "${GREEN}      🚀 部署完成 (v0.2)${PLAIN}"
 echo "=========================================================="
 echo "服务器详细配置:"
 echo "----------------------------------------------------------"
-echo -e "地址 (IP)   : \033[36m${IPV4}\033[0m"
-echo -e "端口 (Port) : \033[36m443\033[0m"
-echo -e "优选 SNI    : \033[33m${SNI_HOST}\033[0m"
-echo -e "流控 (Flow) : \033[36mxtls-rprx-vision\033[0m"
-echo -e "UUID        : \033[36m${UUID}\033[0m"
-echo -e "ShortId     : \033[36m${SHORT_ID}\033[0m"
-echo -e "Public Key  : \033[36m${PUBLIC_KEY}\033[0m"
+echo -e "地址 (IP)   : ${BLUE}${IPV4}${PLAIN}"
+echo -e "优选 SNI    : ${YELLOW}${SNI_HOST}${PLAIN}"
+echo -e "UUID        : ${BLUE}${UUID}${PLAIN}"
+echo -e "ShortId     : ${BLUE}${SHORT_ID}${PLAIN}"
+echo -e "Public Key  : ${BLUE}${PUBLIC_KEY}${PLAIN} (客户端用)"
+echo -e "Private Key : ${RED}${PRIVATE_KEY}${PLAIN} (服务端用)"
 echo "----------------------------------------------------------"
-echo "管理指令:"
-echo -e "👉 切换回国模式 : \033[33mmode c\033[0m (阻断/允许)"
-echo -e "👉 查看当前状态 : \033[33mmode\033[0m"
+echo -e "节点 1 (主力): 端口 ${BLUE}443${PLAIN}  流控: ${BLUE}xtls-rprx-vision${PLAIN}"
+echo -e "节点 2 (备用): 端口 ${BLUE}8443${PLAIN} 协议: ${BLUE}xhttp${PLAIN} 路径: ${BLUE}${XHTTP_PATH}${PLAIN}"
+echo "----------------------------------------------------------"
+echo "当前状态与指令:"
+echo -e "当前模式    : ${GREEN}阻断回国 (Block CN)${PLAIN}"
+echo -e "切换模式    : ${YELLOW}mode c${PLAIN}"
+echo -e "查看状态    : ${YELLOW}mode${PLAIN}"
 echo "----------------------------------------------------------"
 echo ""
-echo -e "\033[33m👇 链接 (复制导入):\033[0m"
-echo -e "\033[32m${LINK}\033[0m"
+echo -e "${YELLOW}👇 节点1 链接 (复制导入 - 推荐):${PLAIN}"
+echo -e "${GREEN}${LINK_VISION}${PLAIN}"
 echo ""
-echo -e "\033[33m👇 二维码 (手机应用扫码):\033[0m"
-qrencode -t ANSIUTF8 "${LINK}"
+echo -e "${YELLOW}👇 节点2 链接 (复制导入 - 备用):${PLAIN}"
+echo -e "${GREEN}${LINK_XHTTP}${PLAIN}"
+echo ""
+echo -e "${YELLOW}👇 节点1 二维码:${PLAIN}"
+qrencode -t ANSIUTF8 "${LINK_VISION}"
+echo ""
+echo -e "${YELLOW}👇 节点2 二维码:${PLAIN}"
+qrencode -t ANSIUTF8 "${LINK_XHTTP}"
 echo ""
