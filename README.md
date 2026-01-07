@@ -1,4 +1,4 @@
-# 🚀 Xray Auto Deployment Script (VLESS-Reality-Vision/xhttp)
+# 🚀 Xray Auto Deployment Script (VLESS+Reality-Vision/xhttp)
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![System](https://img.shields.io/badge/System-Debian%20%7C%20Ubuntu-orange)](https://github.com/accforeve/Xray-Auto)
@@ -12,8 +12,8 @@
 这是一个全自动化的 Xray 部署脚本，基于 **VLESS + Reality-Vision/(xhttp)** 顶尖流控协议。专为 Debian 和 Ubuntu 系统设计，提供极致的性能优化与安全防护。
 
 * 版本: v0.2
-* 核心: Xray-core (VLESS + Reality)
-* 协议: TCP-Vision (主力) + xhttp (备用)
+* 核心: Xray-core (VLESS + Reality/xhttp)
+* 协议: VLESS+Reality-Vision/xhttp
  
 ### ✨ 核心功能
 
@@ -73,10 +73,7 @@ bash <(curl -sL https://raw.githubusercontent.com/accforeve/Xray-Auto/main/remov
 | ---- | ---- |
 | `mode` | 查看当前分流策略状态（阻断/允许回国） |
 
-**配置文件路径:**
- * Xray 配置: /usr/local/etc/xray/config.json
-
-### 📝 配置说明 | Configuration Details
+### 📝 配置说明
 安装结束后，脚本会自动输出连接信息，包含：
 * 节点配置信息：ip、端口、SNI等，用于手输时使用。
 * VLESS 链接：可直接复制导入客户端（如 v2rayN, V2Box, Shadowrocket 等）。
@@ -88,8 +85,8 @@ bash <(curl -sL https://raw.githubusercontent.com/accforeve/Xray-Auto/main/remov
 An advanced, fully automated deployment script for Xray, featuring VLESS + Reality-Vision. Designed for performance, security, and ease of use on Debian and Ubuntu systems.
 
 * Version: v0.2
-* Core: Xray-core (VLESS + Reality)  
-* Protocols: TCP-Vision (Primary) + xhttp (Secondary/Fallback)
+* Core: Xray-core (VLESS + Reality/xhttp)  
+* Protocols: VLESS+Reality-Vision/xhttp
 
 ### ✨ Key Features
  * ⚡️ Cutting-edge Protocol: Deploys VLESS + Reality-Vision/xhttp flow control.
@@ -154,9 +151,6 @@ After installation, use the following commands:
 | Command | Description |
 |---|---|
 | mode | Check current routing status (Block/Allow CN) |
-
-**Configuration Paths:**
- * Xray Config: /usr/local/etc/xray/config.json
 
 ### 📝 Configuration Details
 After installation is complete, the script will automatically output connection information, including:
