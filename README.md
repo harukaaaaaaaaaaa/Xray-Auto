@@ -1,7 +1,7 @@
 # 🚀 Xray Auto Deployment Script (VLESS+Reality-Vision/xhttp)
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![System](https://img.shields.io/badge/System-Debian%20%7C%20Ubuntu-orange)](https://github.com/realfanzhongyan/Xray-Auto)
+[![System](https://img.shields.io/badge/System-Debian%20%7C%20Ubuntu-orange)](https://github.com/ISFZY/Xray-Auto)
 
 [中文文档](#chinese) | [English Description](#english)
 
@@ -57,13 +57,13 @@
 
 **🚀 快速安装**
 ```
-bash <(curl -Ls https://github.com/realfanzhongyan/Xray-Auto/raw/main/install.sh)
+bash <(curl -Ls https://github.com/ISFZY/Xray-Auto/raw/main/install.sh)
 
 ```
 **🗑️ 卸载**
 如果你想移除 Xray 及其相关配置：
 ```
-bash <(curl -sL https://github.com/realfanzhongyan/Xray-Auto/raw/main/remove.sh)
+bash <(curl -sL https://github.com/ISFZY/Xray-Auto/raw/main/remove.sh)
 
 ```
 ### 常用指令
@@ -135,13 +135,13 @@ This script deploys two cutting-edge protocols. Ensure your client supports them
 ### 🚀 Installation
 Replace YourUsername and YourRepo with your actual GitHub username and repository name:
 ```
-bash <(curl -Ls https://github.com/realfanzhongyan/Xray-Auto/raw/main/install.sh)
+bash <(curl -Ls https://github.com/ISFZY/Xray-Auto/raw/main/install.sh)
 
 ```
 ### 🗑️ Uninstall
 To remove Xray and its associated configurations:
 ```
-bash <(curl -sL https://github.com/realfanzhongyan/Xray-Auto/raw/main/remove.sh)
+bash <(curl -sL https://github.com/ISFZY/Xray-Auto/raw/main/remove.sh)
 
 ```
 ### 🛠 Management
@@ -158,7 +158,7 @@ After installation is complete, the script will automatically output connection 
 * **QR Code**: Scan with a mobile phone to connect directly.
 
 ### ⚠️ 免责声明 | Disclaimer
-本项目（脚本及相关文档）依据 [**GNU General Public License v3.0 (GPL-3.0)**](https://github.com/realfanzhongyan/Xray-Auto/blob/main/LICENSE) 许可证开源。在使用本项目之前，请务必仔细阅读以下条款。一旦您下载、安装或使用本项目，即表示您已阅读并同意本免责声明的全部内容。
+本项目（脚本及相关文档）依据 [**GNU General Public License v3.0 (GPL-3.0)**](https://github.com/ISFZY/Xray-Auto/blob/main/LICENSE) 许可证开源。在使用本项目之前，请务必仔细阅读以下条款。一旦您下载、安装或使用本项目，即表示您已阅读并同意本免责声明的全部内容。
 
 ### 1. 软件及其衍生品仅仅用于技术研究
 本项目及其包含的脚本（`install.sh`）仅供网络安全技术研究、服务器性能测试及计算机网络教学之用。
@@ -190,7 +190,7 @@ After installation is complete, the script will automatically output connection 
 
 
 ### ⚠️ 免责声明 | Disclaimer
-This project (including the script and related documentation) is open-sourced under the [**GNU General Public License v3.0 (GPL-3.0)**](https://github.com/realfanzhongyan/Xray-Auto/blob/main/LICENSE). By downloading, installing, or using this project, you acknowledge that you have read and agreed to the following terms.
+This project (including the script and related documentation) is open-sourced under the [**GNU General Public License v3.0 (GPL-3.0)**](https://github.com/ISFZY/Xray-Auto/blob/main/LICENSE). By downloading, installing, or using this project, you acknowledge that you have read and agreed to the following terms.
 
 ### 1. Educational and Research Purpose Only
 This project is intended strictly for **network security research, server performance testing, and computer networking education**.
@@ -221,5 +221,5 @@ Any legal consequences or liabilities arising from the illegal use of this proje
 
 
 
-[Project maintained by realfanzhongyan](https://github.com/realfanzhongyan)
+[Project maintained by ISFZY](https://github.com/ISFZY)
 
