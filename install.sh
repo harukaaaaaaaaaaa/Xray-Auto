@@ -78,7 +78,7 @@ wait_with_countdown() {
     local seconds=$1; local message=$2
     read -t 0.1 -n 10000 discard 2>/dev/null
     for ((i=seconds; i>0; i--)); do
-        echo -ne "\r${PURPLE}👉 ${message} [Enter 快进 / 其他键修改] ${PLAIN}(默认: ${BG_RED} ${i} ${PLAIN}${PURPLE}s) ${PLAIN}"
+echo -ne "\r${GREEN}👉 ${message} ${PLAIN}[Enter 快进 / 其他键修改] (默认: ${YELLOW} ${i} ${PLAIN}${GREEN}s) ${PLAIN}"
         if IFS= read -t 1 -s -n 1 key; then
             if [[ -z "$key" ]]; then echo -e "\n⏩ 使用默认配置。"; return 0;
             else echo -e "\n✏️  切换为手动输入..."; return 1; fi
