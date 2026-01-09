@@ -187,7 +187,7 @@ systemctl restart rsyslog || echo "Rsyslog restart skipped"
 systemctl enable fail2ban >/dev/null 2>&1
 systemctl restart fail2ban
 
-echo -n "   🛠️  执行内核调优 (BBR + Swap)..."
+echo -ne "${GREEN}   🛠️  执行内核调优 (BBR + Swap)...${PLAIN}"
 set_sysctl "net.core.default_qdisc" "fq"
 set_sysctl "net.ipv4.tcp_congestion_control" "bbr"
 sysctl -p >/dev/null 2>&1
