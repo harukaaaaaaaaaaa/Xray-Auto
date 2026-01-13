@@ -461,7 +461,7 @@ enabled = true
 port = $SSH_PORT,22
 mode = aggressive
 EOF
-    execute_task "systemctl restart rsyslog && systemctl enable fail2ban && systemctl restart fail2ban" "配置 Fail2ban 防护"
+    execute_task "systemctl restart rsyslog && systemctl enable fail2ban && systemctl restart fail2ban" "配置 Fail2ban 防护(开启指数封禁)"
 
     # 防火墙规则
     _add_fw_rule $SSH_PORT $HAS_V4 $HAS_V6
