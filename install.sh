@@ -390,7 +390,7 @@ setup_firewall_and_security() {
 
     if [[ "$port_choice" =~ ^[yY]$ ]]; then
         
-        # === 1. SSH 端口配置 (完全复刻 ports 脚本的强警示交互) ===
+        # === 1. SSH 端口配置 ===
         clear
         echo -e "${RED}################################################################${PLAIN}"
         echo -e "${RED}#                      高风险操作警告 (WARNING)                #${PLAIN}"
@@ -585,7 +585,7 @@ mkdir -p /usr/local/etc/xray
 
 XRAY_BIN="/usr/local/bin/xray"
 
-# 2. 核心文件熔断检查 (防止核心没装好就生成空配置)
+# 2. 核心文件熔断检查
 if [ ! -f "$XRAY_BIN" ]; then
     echo -e "${RED}==========================================================${PLAIN}"
     echo -e "${RED} [FATAL] 严重错误：Xray 核心文件未安装成功！               ${PLAIN}"
@@ -643,7 +643,7 @@ echo -e "[Service]\nLimitNOFILE=infinity\nLimitNPROC=infinity\nTasksMax=infinity
 # 四、脚本管理区 (Script Management Area)
 # ==================================================================
 
-# --- 1. 生成 Info 脚本 ---
+# --- 1. Info 脚本 ---
 cat > /usr/local/bin/info << 'EOF'
 #!/bin/bash
 RED="\033[31m"; GREEN="\033[32m"; YELLOW="\033[33m"; BLUE="\033[36m"; PLAIN="\033[0m"
@@ -687,7 +687,7 @@ if [ -n "$PRIVATE_KEY" ] && [ "$PRIVATE_KEY" != "null" ] && [ -x "$XRAY_BIN" ]; 
     PUBLIC_KEY=$(echo "$RAW_OUTPUT" | grep -iE "Public|Password" | head -n 1 | awk -F':' '{print $2}' | tr -d ' \r\n')
 fi
 
-# [熔断检查]：如果算不出公钥，说明配置已废，禁止生成链接误导用户
+# [熔断检查]：如果算不出公钥，说明配置已废，禁止生成链接
 if [ -z "$PUBLIC_KEY" ] || [ "$PUBLIC_KEY" == "null" ]; then
     clear
     echo -e "${RED}=======================================================${PLAIN}"
@@ -754,7 +754,7 @@ echo ""
 EOF
 chmod +x /usr/local/bin/info
 
-# --- 2. 生成 Net 脚本 (交互面板版) ---
+# --- 2. Net 脚本 ---
 cat > /usr/local/bin/net << 'EOF'
 #!/bin/bash
 RED="\033[31m"; GREEN="\033[32m"; YELLOW="\033[33m"; BLUE="\033[36m"; PLAIN="\033[0m"
@@ -868,7 +868,7 @@ done
 EOF
 chmod +x /usr/local/bin/net
 
-# --- 3. 生成 Ports 脚本 (带SSH安全警示) ---
+# --- 3. Ports 脚本 ---
 cat > /usr/local/bin/ports << 'EOF'
 #!/bin/bash
 RED="\033[31m"; GREEN="\033[32m"; YELLOW="\033[33m"; BLUE="\033[36m"; GRAY="\033[90m"; PLAIN="\033[0m"
@@ -1025,7 +1025,7 @@ done
 EOF
 chmod +x /usr/local/bin/ports
 
-# --- 4. 生成 Fail2ban 管理脚本 (f2b) - 完美版 ---
+# --- 4. Fail2ban 管理脚本 ---
 cat > /usr/local/bin/f2b << 'EOF'
 #!/bin/bash
 RED="\033[31m"; GREEN="\033[32m"; YELLOW="\033[33m"; BLUE="\033[36m"; GRAY="\033[90m"; PLAIN="\033[0m"
@@ -1259,7 +1259,7 @@ CMD_START="systemctl daemon-reload && systemctl enable xray && systemctl restart
 # 使用新的 execute_task (无返回值显示，靠内部[OK]显示)
 if execute_task "$CMD_START" "启动 Xray 服务 (Start Service)"; then
     
-    # --- 成功展示 ---
+    # --- 成功 ---
     echo -e "\n${OK} ${GREEN}安装全部完成 (Installation Complete)${PLAIN}"
     
     # 自动执行一次 info 显示结果
@@ -1267,7 +1267,7 @@ if execute_task "$CMD_START" "启动 Xray 服务 (Start Service)"; then
         bash /usr/local/bin/info
     fi
 else
-    # --- 失败展示 ---
+    # --- 失败 ---
     echo -e "\n${ERR} ${RED}Xray 服务启动失败！${PLAIN}"
     echo -e "${YELLOW}>>> 最后 20 行日志 (Journalctl):${PLAIN}"
     journalctl -u xray --no-pager -n 20
