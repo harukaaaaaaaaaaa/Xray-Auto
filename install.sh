@@ -335,7 +335,7 @@ done
 # 安装 Xray
 mkdir -p /usr/local/share/xray/
 CMD_XRAY='bash -c "$(curl -L '$CURL_OPT' https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --without-geodata'
-echo -e ""
+
 echo -e "${OK}   基础组件安装完毕。\n"
 
 # --- 下载 Geo 数据并配置自动更新 ---
