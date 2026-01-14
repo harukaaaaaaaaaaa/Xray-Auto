@@ -352,41 +352,54 @@ for pkg in "${DEPENDENCIES[@]}"; do
     fi
 done
 
-# === 3. Xray 核心安装 (二进制验证 + 循环重试) ===
+# === 3. Xray 核心安装 (支持版本锁定) ===
 install_xray_robust() {
     local max_tries=3
     local count=0
     local bin_path="/usr/local/bin/xray"
     
+    # [设置] 版本锁定
+    # 留空 "" = 始终安装最新版 (Latest)
+    # 填值 "v00.00.00" = 锁定特定版本
+    # 目前 XHTTP 需要较新版本，暂时不锁
+    local FIXED_VER="" 
+    
+    # 构造版本参数
+    local VER_ARG=""
+    if [ -n "$FIXED_VER" ]; then
+        VER_ARG="--version $FIXED_VER"
+        echo -e "${INFO} 已启用版本锁定: ${YELLOW}${FIXED_VER}${PLAIN}"
+    fi
+    
     mkdir -p /usr/local/share/xray/
 
     while [ $count -lt $max_tries ]; do
-        # 执行官方安装脚本
-        CMD_XRAY='bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --without-geodata'
+        # 注：在 install 后面加上了 $VER_ARG
+        CMD_XRAY='bash -c "$(curl -L -o /dev/null -s -w %{url_effective} https://github.com/XTLS/Xray-install/raw/main/install-release.sh | xargs curl -L)" @ install --without-geodata '"$VER_ARG"
         
         if [ $count -gt 0 ]; then
             desc="安装 Xray Core (第 $((count+1)) 次尝试)"
         else
             desc="安装 Xray Core"
         fi
+        
+        # 执行安装
         execute_task "$CMD_XRAY" "$desc"
         
-        # [关键步骤] 验证：不仅检查文件存在，还要试运行一次看版本
+        # 验证
         if [ -f "$bin_path" ] && "$bin_path" version &>/dev/null; then
             local ver=$("$bin_path" version | head -n 1 | awk '{print $2}')
             echo -e "${OK}   Xray 核心校验通过: ${GREEN}${ver}${PLAIN}"
             return 0
         fi
         
-        echo -e "${WARN} Xray 安装校验失败 (文件损坏或无法运行)，清理环境重试..."
-        # 删除可能损坏的二进制文件
+        echo -e "${WARN} 安装校验失败，清理重试..."
         rm -rf "$bin_path" "/usr/local/share/xray/"
         ((count++))
         sleep 2
     done
     
     echo -e "${ERR} [FATAL] Xray Core 安装最终失败！"
-    echo -e "${YELLOW}可能原因：GitHub 连接被墙或网络极不稳定。${PLAIN}"
     exit 1
 }
 
@@ -824,7 +837,7 @@ fi
 
 # 底部常用命令提示
 echo -e "\n------------------------------------------------------------------"
-echo -e " 常用工具: ${YELLOW}info${PLAIN}  (回显) | ${YELLOW}net${PLAIN} (网络) | ${YELLOW}swap${PLAIN} (内存) | ${YELLOW}bt${PLAIN} (封禁) | ${YELLOW}f2b${PLAIN} (防火墙)"
+echo -e " 常用工具: ${YELLOW}info${PLAIN}  (回显) | ${YELLOW}net${PLAIN} (网络) | ${YELLOW}swap${PLAIN} (内存) | ${YELLOW}f2b${PLAIN} (防火墙)"
 echo -e " 运维命令: ${YELLOW}ports${PLAIN} (端口) | ${YELLOW}bbr${PLAIN} (内核) | ${YELLOW}bt${PLAIN}   (封禁) | ${YELLOW}journalctl -u xray -f${PLAIN} (日志)"
 echo -e "------------------------------------------------------------------"
 echo ""
