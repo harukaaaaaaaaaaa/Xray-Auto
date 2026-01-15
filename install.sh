@@ -563,7 +563,7 @@ bantime = 1d
 bantime.increment = true
 bantime.factor = 1
 bantime.maxtime = 30d
-findtime = 1d
+findtime = 7d
 maxretry = 3
 # 改为 auto，让它自动兼容日志文件和systemd，防止崩溃
 backend = auto
