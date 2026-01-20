@@ -125,7 +125,7 @@ read_with_timeout() {
     USER_INPUT="$default"
 }
 
-# --- 核心：旋转光标监控 (Standard Spinner) [修复版] ---
+# --- 核心：旋转光标监控 (Standard Spinner) ---
 monitor_task_inline() {
     local pid=$1
     local logfile=$2
@@ -420,43 +420,60 @@ install_xray_robust() {
 
 install_xray_robust
 
-# === 4. GeoIP 数据库下载 (校验 + 自动更新) ===
-install_geoip_robust() {
-    local file="/usr/local/share/xray/geoip.dat"
-    local url="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+# === 4. GeoData 核心数据库安装 (IP + 域名) ===
+install_geodata_robust() {
+    local share_dir="/usr/local/share/xray"
+    local bin_dir="/usr/local/bin"
+    mkdir -p "$share_dir"
     
-    # --- 1. 下载 ---
-    execute_task "curl -L $CURL_OPT -o $file $url" "下载 GeoIP 规则库"
-    
-    # --- 2. 校验 (验证文件是否存在且大小正常) ---
-    local fsize=$(du -k "$file" 2>/dev/null | awk '{print $1}')
-    if [ ! -f "$file" ] || [ "$fsize" -lt 500 ]; then
-        echo -e "${WARN} GeoIP 文件似乎不完整 (Size: ${fsize}KB)，正在重试下载..."
-        rm -f "$file"
-        execute_task "curl -L $CURL_OPT -o $file $url" "重试下载 GeoIP"
-        
-        # 二次检查
-        if [ ! -f "$file" ]; then
-            echo -e "${WARN} GeoIP 下载失败，将跳过 (不影响核心功能)。"
-            return 1
-        fi
-    fi
+    # 定义下载目标
+    declare -A files
+    files["geoip.dat"]="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+    files["geosite.dat"]="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
 
-    # --- 3. 配置自动更新 (Crontab) ---
-    # 定义更新命令
-    local update_cmd="curl -L $CURL_OPT -o $file $url && systemctl restart xray"
+    echo -e "${INFO} 开始下载核心数据库 (GeoIP + Geosite)..."
+
+    for name in "${!files[@]}"; do
+        local url="${files[$name]}"
+        local file_path="$share_dir/$name"
+        local link_path="$bin_dir/$name"
+
+        # 1. 下载
+        execute_task "curl -L -o $file_path $url" "下载 $name"
+
+        # 2. 校验 (必须存在且大于 500KB)
+        local fsize=$(du -k "$file_path" 2>/dev/null | awk '{print $1}')
+        if [ ! -f "$file_path" ] || [ "$fsize" -lt 500 ]; then
+            echo -e "${WARN} $name 文件校验失败 (Size: ${fsize}KB)，尝试重试..."
+            rm -f "$file_path"
+            execute_task "curl -L -o $file_path $url" "重试下载 $name"
+            
+            # 二次校验
+            if [ ! -f "$file_path" ]; then
+                echo -e "${ERR} [FATAL] $name 下载失败，分流功能将无法使用！"
+            fi
+        fi
+
+        # 3. 建立软链接 (关键修复：解决 Xray 找不到文件的问题)
+        # Xray 默认会在运行目录(/usr/local/bin)查找 dat 文件
+        ln -sf "$file_path" "$link_path"
+        echo -e "${OK}   已建立链接: $link_path"
+    done
+
+    # --- 4. 配置双库自动更新 (Crontab) ---
+    # 每周日 4:00 同时更新 geoip 和 geosite，并重启 Xray
+    local update_cmd="curl -L -o $share_dir/geoip.dat ${files[geoip.dat]} && curl -L -o $share_dir/geosite.dat ${files[geosite.dat]} && systemctl restart xray"
     local cron_job="0 4 * * 0 $update_cmd >/dev/null 2>&1"
 
-    # 确保 cron 已安装
     if ! command -v crontab &>/dev/null; then apt-get install -y cron &>/dev/null; fi
     
-    # 写入任务 (先删旧的，再加新的)
-    (crontab -l 2>/dev/null | grep -v 'geoip.dat'; echo "$cron_job") | crontab -
+    # 写入任务 (先清理旧的 geoip/geosite 任务，再写入新的)
+    (crontab -l 2>/dev/null | grep -v 'geoip.dat' | grep -v 'geosite.dat'; echo "$cron_job") | crontab -
     
-    echo -e "${OK}   geoip 自动更新任务 (每周日 4:00)"
+    echo -e "${OK}   已添加 GeoData 自动更新任务 (每周日 4:00)"
 }
 
-install_geoip_robust
+install_geodata_robust
 
 echo -e "${OK}   基础组件安装完毕 (已通过完整性自检)。\n"
 
@@ -853,7 +870,7 @@ fi
 # 底部常用命令提示
 echo -e "\n------------------------------------------------------------------"
 echo -e " 常用工具: ${YELLOW}info${PLAIN}  (回显) | ${YELLOW}net${PLAIN} (网络) | ${YELLOW}swap${PLAIN} (内存) | ${YELLOW}f2b${PLAIN} (防火墙)"
-echo -e " 运维命令: ${YELLOW}ports${PLAIN} (端口) | ${YELLOW}bbr${PLAIN} (内核) | ${YELLOW}bt${PLAIN}   (封禁) | ${YELLOW}journalctl -u xray -f${PLAIN} (日志)"
+echo -e " 运维命令: ${YELLOW}ports${PLAIN} (端口) | ${YELLOW}bbr${PLAIN} (内核) | ${YELLOW}bt${PLAIN}   (封禁) | ${YELLOW}xw${PLAIN}  (WARP分流) | ${YELLOW}journalctl -u xray -f${PLAIN} (日志)"
 echo -e "------------------------------------------------------------------"
 echo ""
 EOF
@@ -1222,7 +1239,7 @@ unban_ip() {
     echo -e "\n${BLUE}--- 手动解封 IP (Unban Manager) ---${PLAIN}"
     
     # 获取被封禁列表
-    # 原始输出包含 "Banned IP list: IP1 IP2 ...", 提取冒号后面的部分
+    # 原始输出包含 "Banned IP list: IP1 IP2 ...", 我们提取冒号后面的部分
     local banned_list=$(fail2ban-client status sshd 2>/dev/null | grep "Banned IP list" | awk -F':' '{print $2}' | sed 's/^[ \t]*//')
     
     # 如果列表为空或全是空格
@@ -1293,7 +1310,7 @@ view_logs() {
             
             # 2. 对齐 PID 字段 (识别类似 [12345]: 的列)
             if ($4 ~ /^\[.*\]:$/) {
-                # 右对齐，宽度设为 9
+                # 右对齐，宽度设为 9 (PID通常5-6位，9足够容纳)
                 $4 = sprintf("%9s", $4)
             }
             
@@ -1755,7 +1772,7 @@ while true; do
     echo -e "${BLUE}===================================================${PLAIN}"
     echo -e "${BLUE}          流量拦截管理 (Traffic Blocker)          ${PLAIN}"
     echo -e "${BLUE}===================================================${PLAIN}"
-    echo -e "  BT / P2P 下载  : ${STATUS_BT}"
+    echo -e "  BT / P2P 下载   : ${STATUS_BT}"
     echo -e "  私有 IP (局域网): ${STATUS_PRIVATE}"
     echo -e "---------------------------------------------------"
     echo -e "  1. 开启/关闭 ${YELLOW}BT 下载封禁${PLAIN}"
@@ -1774,6 +1791,166 @@ while true; do
 done
 EOF
 chmod +x /usr/local/bin/bt
+
+# --- 8. WARP 管理脚本 (xw) ---
+cat > /usr/local/bin/xw << 'EOF'
+#!/bin/bash
+RED="\033[31m"; GREEN="\033[32m"; YELLOW="\033[33m"; BLUE="\033[36m"; GRAY="\033[90m"; PLAIN="\033[0m"
+
+CONFIG_FILE="/usr/local/etc/xray/config.json"
+WARP_PORT=40000
+
+# 0. 启动即清屏
+clear
+if [ "$EUID" -ne 0 ]; then echo -e "${RED}请使用 sudo 运行此脚本！${PLAIN}"; exit 1; fi
+
+# --- 核心检测函数 ---
+check_warp_socket() {
+    (echo > /dev/tcp/127.0.0.1/$WARP_PORT) >/dev/null 2>&1
+}
+
+wait_for_port() {
+    echo -ne "${INFO} 正在等待 WARP 服务启动..."
+    for i in {1..15}; do
+        if check_warp_socket; then
+            echo -e "\r${OK} WARP 服务响应正常 (127.0.0.1:$WARP_PORT)    "
+            return 0
+        fi
+        echo -ne "."
+        sleep 1
+    done
+    echo -e "\r${WARN} WARP 服务响应超时，请检查日志。    "
+    return 1
+}
+
+check_xray_outbound() {
+    if jq -e '.outbounds[] | select(.tag=="warp_proxy")' "$CONFIG_FILE" >/dev/null; then return 0; else return 1; fi
+}
+
+# [UI优化] 状态显示改为统一宽度，方便对齐
+check_rule_ui() {
+    local site=$1 
+    if jq -e --arg site "$site" '.routing.rules[] | select(.outboundTag=="warp_proxy" and (.domain | index($site)))' "$CONFIG_FILE" >/dev/null; then
+        # 绿色，带对勾
+        echo -e "${GREEN}WARP 托管${PLAIN}"
+    else
+        # 黄色，带叉或直连符号
+        echo -e "${YELLOW}默认直连${PLAIN}"
+    fi
+}
+
+apply_changes() {
+    echo -e "${INFO} 正在重启 Xray 服务..."
+    systemctl restart xray
+    echo -e "${GREEN}配置已更新！${PLAIN}"
+    read -n 1 -s -r -p "按任意键继续..."
+}
+
+# --- Xray 配置修改 ---
+ensure_outbound() {
+    if check_xray_outbound; then return; fi
+    echo -e "${INFO} 添加 Xray 出口 (Socks5:$WARP_PORT)..."
+    local out_obj='{"tag": "warp_proxy", "protocol": "socks", "settings": {"servers": [{"address": "127.0.0.1", "port": '$WARP_PORT'}]}}'
+    jq --argjson obj "$out_obj" '.outbounds += [$obj]' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+}
+
+remove_outbound() {
+    echo -e "${INFO} 移除 Xray 出口..."
+    jq 'del(.outbounds[] | select(.tag=="warp_proxy"))' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+    jq 'del(.routing.rules[] | select(.outboundTag=="warp_proxy"))' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+}
+
+toggle_rule() {
+    local name=$1; local sites_json=$2 
+    ensure_outbound
+    if ! check_warp_socket; then
+        echo -e "${WARN} WARP 未运行！请先执行选项 1 安装。"
+        read -n 1 -s -r; return
+    fi
+    local first_site=$(echo "$sites_json" | jq -r '.[0]')
+    local is_enabled=false
+    if jq -e --arg site "$first_site" '.routing.rules[] | select(.outboundTag=="warp_proxy" and (.domain | index($site)))' "$CONFIG_FILE" >/dev/null; then is_enabled=true; fi
+
+    if [ "$is_enabled" = true ]; then
+        echo -e "操作: ${YELLOW}关闭 $name 分流${PLAIN}"
+        jq --argjson sites "$sites_json" 'del(.routing.rules[] | select(.outboundTag=="warp_proxy" and (.domain == $sites)))' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+    else
+        echo -e "操作: ${GREEN}开启 $name 分流${PLAIN}"
+        local new_rule="{\"type\": \"field\", \"domain\": $sites_json, \"outboundTag\": \"warp_proxy\"}"
+        jq --argjson rule "$new_rule" '.routing.rules = [$rule] + .routing.rules' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+    fi
+    apply_changes
+}
+
+# --- 功能模块 ---
+install_warp() {
+    echo -e "\n${BLUE}正在安装 WARP (Socks5 模式)...${PLAIN}"
+    wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh c
+    echo -e "\n${INFO} 检查服务状态..."
+    if wait_for_port; then
+        ensure_outbound; systemctl restart xray
+        echo -e "${OK} 安装成功！Xray 已自动对接。"
+    else
+        echo -e "${ERR} 安装可能失败，请查看上方报错。"
+    fi
+    read -n 1 -s -r -p "按任意键继续..."
+}
+
+uninstall_warp() {
+    echo -e "\n${RED}正在卸载 WARP...${PLAIN}"
+    if command -v warp &>/dev/null; then warp u; else wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh u; fi
+    remove_outbound; systemctl restart xray
+    echo -e "${GREEN}卸载清理完毕。${PLAIN}"
+    read -n 1 -s -r -p "按任意键继续..."
+}
+
+menu_brush_ip() {
+    echo -e "\n${BLUE}调用优选 IP 工具...${PLAIN}"
+    if command -v warp &>/dev/null; then warp i; else wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh i; fi
+    read -n 1 -s -r -p "按任意键继续..."
+}
+
+# --- 主菜单 ---
+while true; do
+    clear
+    # 状态栏使用图标，更直观
+    if check_warp_socket; then STATUS_SOCK="${GREEN}● 运行中${PLAIN}"; else STATUS_SOCK="${RED}● 未运行${PLAIN}"; fi
+    if check_xray_outbound; then STATUS_XRAY="${GREEN}● 已连接${PLAIN}"; else STATUS_XRAY="${YELLOW}● 未连接${PLAIN}"; fi
+    
+    # 规则检测 (UI函数)
+    STATUS_NF=$(check_rule_ui "geosite:netflix")
+    STATUS_AI=$(check_rule_ui "geosite:openai")
+
+    echo -e "${BLUE}===================================================${PLAIN}"
+    echo -e "${BLUE}           WARP 分流管理面板 (Xray Warp)          ${PLAIN}"
+    echo -e "${BLUE}===================================================${PLAIN}"
+    echo -e "  WARP 服务: ${STATUS_SOCK}    Xray 接口: ${STATUS_XRAY}"
+    echo -e "---------------------------------------------------"
+    echo -e "  1. 安装 / 重装 WARP   ${GRAY}(自动配置 Socks5 端口 40000)${PLAIN}"
+    echo -e "  2. 彻底卸载 WARP      ${GRAY}(卸载并清理残留规则)${PLAIN}"
+    echo -e "  3. 优选 WARP IP       ${GRAY}(当 Netflix 依然看不了时使用)${PLAIN}"
+    echo -e "---------------------------------------------------"
+    echo -e "  [分流策略控制台]"
+    # 使用 printf 进行对齐，或者手动使用点阵线
+    echo -e "  4. Netflix 媒体库 ....... [ ${STATUS_NF} ]"
+    echo -e "  5. 全能 AI 分流包 ....... [ ${STATUS_AI} ]"
+    echo -e "     ${GRAY}(含 OpenAI, Claude, Grok)${PLAIN}"
+    echo -e "---------------------------------------------------"
+    echo -e "  0. 退出 (Exit)"
+    echo -e ""
+    read -p "请输入选项 [0-5]: " choice
+    case "$choice" in
+        1) install_warp ;;
+        2) uninstall_warp ;;
+        3) menu_brush_ip ;;
+        4) toggle_rule "Netflix" '["geosite:netflix"]' ;;
+        5) toggle_rule "AI Services" '["geosite:openai","geosite:anthropic","geosite:twitter"]' ;;
+        0) clear; exit 0 ;;
+        *) ;;
+    esac
+done
+EOF
+chmod +x /usr/local/bin/xw
 
 # ==================================================================
 # 五、服务启动与收尾 (Service Start & Finalize)
