@@ -135,6 +135,7 @@ Xray Management Commands
 | 'net' | Switch Network | 1. **IPv4 Priority**: Recommended, best compatibility. 2. **IPv6 Priority**: Suitable for servers with excellent IPv6 connections.3. **IPv4 Only**: Forces Xray to use IPv4 only.4. **IPv6 Only**: Forces Xray to use IPv6 only. |
 | `f2b` | Setting Fail2ban) | Fail2ban |
 
+
 ### 📝 Client Configuration Reference
 | Parameter | Value (Example) | Note |
 | :--- | :--- | :--- |
