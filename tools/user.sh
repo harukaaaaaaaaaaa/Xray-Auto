@@ -39,6 +39,8 @@ _print_list() {
         fi
     done
     echo -e "${GRAY}-----------------------------------------------------------------------${PLAIN}"
+	echo -e "${GREEN}回车 或 0 返回${PLAIN}"
+	echo -e ""
 }
 
 # 2. 生成链接并显示 (复用 info.sh 逻辑)
@@ -119,7 +121,7 @@ _show_connection_info() {
 # 3. 查看用户详情
 view_user_details() {
     _print_list
-    echo -e "${YELLOW}提示：输入序号可查看详细连接信息 [直接回车 或 0 返回]${PLAIN}"
+    echo -e "${YELLOW}提示：输入序号可查看详细连接信息${PLAIN}"
     read -p "序号: " idx
     
     if [[ -z "$idx" || "$idx" == "0" ]]; then return; fi
@@ -208,45 +210,53 @@ add_user() {
     read -n 1 -s -r -p "按任意键返回菜单..."
 }
 
-# 6. 删除用户 (Admin # 保护版)
+# 6. 删除用户
 del_user() {
     _print_list
     
     local len=$(jq '.inbounds[0].settings.clients | length' "$CONFIG_FILE")
+    
+    # === 提前检测：如果只有管理员，直接提示并返回 ===
+    if [ "$len" -le 1 ]; then
+         echo -e "\n${YELLOW}提示：当前仅剩管理员 (#)，无可删除的用户。${PLAIN}"
+         read -n 1 -s -r -p "按任意键返回菜单..."
+         return
+    fi
+
     local idx=""
 
     while true; do
-        echo -e "${YELLOW}请输入要删除的用户 序号(ID) [直接回车 或 0 返回]:${PLAIN}"
+        echo -e "${YELLOW}请输入要删除的用户 序号 (ID):${PLAIN}"
         read -p "序号: " idx
         
-        # 1. 返回逻辑
+        # 返回逻辑
         if [[ -z "$idx" || "$idx" == "0" ]]; then return; fi
 
-        # 2. 数字校验
+        local error_msg=""
+        
+        # 校验逻辑
         if ! [[ "$idx" =~ ^[0-9]+$ ]]; then 
-            echo -e "${RED}输入无效，请输入数字！${PLAIN}\n"
+            error_msg="输入无效，请输入数字！"
+        # 范围校验 (1 到 len-1)
+        elif [ "$idx" -lt 1 ] || [ "$idx" -ge "$len" ]; then
+            local max_id=$((len - 1))
+            error_msg="序号无效 (不能删除 # 管理员，请输入 1-${max_id})！"
+        fi
+
+        # 错误处理 (防刷屏)
+        if [ -n "$error_msg" ]; then
+            echo -e "${RED}${error_msg}${PLAIN}"
+            sleep 1
+            echo -ne "\033[1A\033[K\033[1A\033[K\033[1A\033[K"
             continue 
         fi
         
-        # 3. 范围校验 (核心改动)
-        # 有效范围是 1 到 len-1 (因为 0 是 Admin，len 是总数)
-        # 如果 idx < 1 或者 idx >= len，都算越界
-        if [ "$idx" -lt 1 ] || [ "$idx" -ge "$len" ]; then
-            echo -e "${RED}序号无效 (不能删除 # 管理员，请输入 1-${len})！${PLAIN}\n"
-            continue
-        fi
-        
-        # 4. 剩余数量校验
-        if [ "$len" -le 1 ]; then
-            echo -e "${RED}错误: 至少保留一个用户，无法清空！${PLAIN}"
-            read -n 1 -s -r -p "按任意键返回菜单..."
-            return
-        fi
+        # --- [已删除] 原来的“剩余数量校验”已移除，因为 Admin 永远在 ---
 
         break
     done
 
-    # 直接使用 idx，无需 -1
+    # 执行删除
     local array_idx=$idx
     local email=$(jq -r ".inbounds[0].settings.clients[$array_idx].email // \"无备注\"" "$CONFIG_FILE")
 
