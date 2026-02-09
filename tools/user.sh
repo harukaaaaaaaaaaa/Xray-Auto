@@ -205,15 +205,47 @@ add_user() {
 # 6. 删除用户
 del_user() {
     _print_list
-    echo -e "${YELLOW}请输入要删除的用户 序号 (不是备注):${PLAIN}"
-    read -p "序号: " idx
-    
-    if ! [[ "$idx" =~ ^[0-9]+$ ]]; then echo -e "${RED}输入无效${PLAIN}"; return; fi
-    if [ "$idx" -eq 1 ]; then echo -e "${RED}错误：禁止删除管理员账户 (Admin)！${PLAIN}"; return; fi
     
     local len=$(jq '.inbounds[0].settings.clients | length' "$CONFIG_FILE")
-    if [ "$idx" -lt 1 ] || [ "$idx" -gt "$len" ]; then echo -e "${RED}序号超出范围${PLAIN}"; return; fi
-    if [ "$len" -le 1 ]; then echo -e "${RED}错误: 至少保留一个用户，无法清空！${PLAIN}"; return; fi
+    local idx=""
+
+    # === 开启循环 ===
+    while true; do
+        echo -e "${YELLOW}请输入要删除的用户 序号 (ID) [输入 0 返回]:${PLAIN}"
+        read -p "序号: " idx
+        
+        # 1. 如果输入 0，直接退出函数返回菜单
+        if [[ "$idx" == "0" ]]; then return; fi
+
+        # 2. 校验是否为数字
+        if ! [[ "$idx" =~ ^[0-9]+$ ]]; then 
+            echo -e "${RED}输入无效，请输入数字！${PLAIN}"
+            continue # 跳过本次循环，重新输入
+        fi
+        
+        # 3. 校验管理员 (禁止删除 1)
+        if [ "$idx" -eq 1 ]; then
+            echo -e "${RED}错误：禁止删除管理员账户 (Admin)！请重新输入其他序号。${PLAIN}"
+            continue # 报错后不退出，要求重新输入
+        fi
+        
+        # 4. 校验范围
+        if [ "$idx" -lt 1 ] || [ "$idx" -gt "$len" ]; then
+            echo -e "${RED}序号超出范围 (1-$len)，请重新输入。${PLAIN}"
+            continue
+        fi
+        
+        # 5. 校验剩余数量 (全局保护，防止清空)
+        if [ "$len" -le 1 ]; then
+            echo -e "${RED}错误: 至少保留一个用户，无法清空！${PLAIN}"
+            read -n 1 -s -r -p "按任意键返回菜单..."
+            return
+        fi
+
+        # 如果通过所有检查，跳出循环，继续下面的删除逻辑
+        break
+    done
+    # =========================================
 
     local array_idx=$((idx - 1))
     local email=$(jq -r ".inbounds[0].settings.clients[$array_idx].email // \"无备注\"" "$CONFIG_FILE")
@@ -230,7 +262,6 @@ del_user() {
 
     cp "$CONFIG_FILE" "${CONFIG_FILE}.bak"
     tmp=$(mktemp)
-    # 从所有入站中删除该索引的用户
     jq "del(.inbounds[].settings.clients[$array_idx])" "$CONFIG_FILE" > "$tmp" && mv "$tmp" "$CONFIG_FILE"
     
     restart_service "用户已删除。"
