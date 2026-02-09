@@ -25,7 +25,7 @@ if ! [ -x "$XRAY_BIN" ]; then echo -e "${RED}Error: 缺少 xray 核心。${PLAIN
 _print_list() {
     echo -e "${BLUE}>>> 当前用户列表 (User List)${PLAIN}"
     echo -e "${GRAY}-----------------------------------------------------------------------${PLAIN}"
-    printf "${YELLOW}%-4s %-27s %-40s${PLAIN}\n" "ID" "备注 (Email)" "UUID"
+    printf "${YELLOW}%-4s %-29s %-40s${PLAIN}\n" "ID" "备注 (Email)" "UUID"
     echo -e "${GRAY}-----------------------------------------------------------------------${PLAIN}"
     
     # 使用 jq to_entries 获取真实索引 (key=0,1,2...)
@@ -119,8 +119,8 @@ _show_connection_info() {
 # 3. 查看用户详情
 view_user_details() {
     _print_list
-    echo -e "${YELLOW}提示：输入序号可查看详细连接信息${PLAIN} ${GREEN}[回车 或 0 返回]${PLAIN}"
-    read -p "序号: " idx
+    echo -e "${YELLOW}提示：输入序号(ID)查看详细连接信息${PLAIN} ${GREEN}[回车 或 0 返回]${PLAIN}"
+    read -p "序号(ID): " idx
     
     if [[ -z "$idx" || "$idx" == "0" ]]; then return; fi
     if ! [[ "$idx" =~ ^[0-9]+$ ]]; then echo -e "${RED}输入无效${PLAIN}"; return; fi
@@ -224,8 +224,8 @@ del_user() {
     local idx=""
 
     while true; do
-        echo -e "${YELLOW}请输入要删除的用户 序号 (ID):${PLAIN} ${GREEN}[回车 或 0 返回]${PLAIN}"
-        read -p "序号: " idx
+        echo -e "${YELLOW}提示：请输入要删除的用户序号(ID)${PLAIN} ${GREEN}[回车 或 0 返回]${PLAIN}"
+        read -p "序号(ID): " idx
         
         # 返回逻辑
         if [[ -z "$idx" || "$idx" == "0" ]]; then return; fi
@@ -248,8 +248,6 @@ del_user() {
             echo -ne "\033[1A\033[K\033[1A\033[K\033[1A\033[K"
             continue 
         fi
-        
-        # --- [已删除] 原来的“剩余数量校验”已移除，因为 Admin 永远在 ---
 
         break
     done
