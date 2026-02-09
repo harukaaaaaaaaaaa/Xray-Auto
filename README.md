@@ -126,12 +126,21 @@ bash <(curl -sL https://raw.githubusercontent.com/ISFZY/Xray-Auto/main/tools/rem
 ```
 ---
 
-## ⚠️ 免责声明 (Disclaimer)
+## ⚠️ Disclaimer / 免责声明
 
-* 本项目仅供网络安全技术研究和学习使用。
-* 请遵守所在国家和地区的法律法规。
-* 作者不对使用本项目产生的任何后果负责。
+### 🇺🇸 English
+1.  **Educational Use Only**: This project is intended solely for **learning, technical research, and network testing**. It is not intended for any illegal activities.
+2.  **User Responsibility**: Users must comply with the laws and regulations of their local jurisdiction and the location of the server. The author assumes no responsibility for any legal consequences arising from the use of this script.
+3.  **No Warranty**: This software is provided "AS IS", without warranty of any kind, express or implied. The author disclaims all liability for any damages, data loss, or system instability resulting from its use.
+4.  **Third-Party Tools**: This script relies on third-party programs (e.g., Xray-core). The author is not responsible for the security, stability, or content of these external tools.
+5.  **GPL v3 License**: This project is licensed under the **GNU General Public License v3.0**. Please review the `LICENSE` file for full terms and conditions.
 
+### 🇨🇳 中文
+1.  **仅供科研与学习**: 本项目仅用于**网络技术研究、学习交流及系统测试**。请勿将本脚本用于任何违反国家法律法规的用途。
+2.  **法律合规**: 使用本脚本时，请务必遵守您所在国家/地区以及服务器所在地的法律法规。严禁用于涉及政治、宗教、色情、诈骗等非法内容的传播。一切因违规使用产生的法律后果，由使用者自行承担，作者不承担任何连带责任。
+3.  **无担保条款**: 本软件按“原样”提供，不提供任何形式的明示或暗示担保。作者不对因使用本脚本而导致的任何直接或间接损失（包括但不限于数据丢失、系统崩溃、IP 被封锁、服务器被服务商暂停等）负责。
+4.  **第三方组件**: 本脚本集成了第三方开源程序（如 Xray-core），其版权和责任归原作者所有。本脚本作者不对第三方程序的安全性或稳定性做出保证。
+5.  **许可证**: 本项目遵循 **GNU General Public License v3.0** 开源协议，详细条款请参阅仓库内的 `LICENSE` 文件。
 ---
 
 **Made with ❤️ by ISFZY**
