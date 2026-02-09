@@ -209,44 +209,48 @@ del_user() {
     local len=$(jq '.inbounds[0].settings.clients | length' "$CONFIG_FILE")
     local idx=""
 
-    # === 开启循环 ===
+    # 循环等待有效输入
     while true; do
-        echo -e "${YELLOW}请输入要删除的用户 序号 (ID) [输入 0 返回]:${PLAIN}"
+        echo -e "${YELLOW}请输入要删除的用户 序号(ID) (输入 0 或回车返回):${PLAIN}"
         read -p "序号: " idx
         
-        # 1. 如果输入 0，直接退出函数返回菜单
-        if [[ "$idx" == "0" ]]; then return; fi
+        # 1. 如果输入为空(直接回车) 或 输入0 -> 返回菜单
+        if [[ -z "$idx" || "$idx" == "0" ]]; then return; fi
 
         # 2. 校验是否为数字
         if ! [[ "$idx" =~ ^[0-9]+$ ]]; then 
             echo -e "${RED}输入无效，请输入数字！${PLAIN}"
-            continue # 跳过本次循环，重新输入
+            echo ""
+            continue 
         fi
         
-        # 3. 校验管理员 (禁止删除 1)
+        # 3. 校验管理员 (禁止删除 1) -> 报错并重新输
         if [ "$idx" -eq 1 ]; then
-            echo -e "${RED}错误：禁止删除管理员账户 (Admin)！请重新输入其他序号。${PLAIN}"
-            continue # 报错后不退出，要求重新输入
+            echo -e "${RED}错误：禁止删除管理员账户 (Admin)！${PLAIN}"
+            echo -e "请重新输入其他序号..."
+            echo ""
+            continue # 跳过本次循环，直接回到开头让用户重输
         fi
         
         # 4. 校验范围
         if [ "$idx" -lt 1 ] || [ "$idx" -gt "$len" ]; then
             echo -e "${RED}序号超出范围 (1-$len)，请重新输入。${PLAIN}"
+            echo ""
             continue
         fi
         
-        # 5. 校验剩余数量 (全局保护，防止清空)
+        # 5. 校验剩余数量
         if [ "$len" -le 1 ]; then
             echo -e "${RED}错误: 至少保留一个用户，无法清空！${PLAIN}"
             read -n 1 -s -r -p "按任意键返回菜单..."
             return
         fi
 
-        # 如果通过所有检查，跳出循环，继续下面的删除逻辑
+        # 输入合法，跳出循环
         break
     done
-    # =========================================
 
+    # === 执行删除逻辑 ===
     local array_idx=$((idx - 1))
     local email=$(jq -r ".inbounds[0].settings.clients[$array_idx].email // \"无备注\"" "$CONFIG_FILE")
 
