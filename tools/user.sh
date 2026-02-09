@@ -25,17 +25,17 @@ if ! [ -x "$XRAY_BIN" ]; then echo -e "${RED}Error: 缺少 xray 核心。${PLAIN
 _print_list() {
     echo -e "${BLUE}>>> 当前用户列表 (User List)${PLAIN}"
     echo -e "${GRAY}-----------------------------------------------------------------------${PLAIN}"
-    printf "${YELLOW}%-5s %-31s %-40s${PLAIN}\n" "ID" "备注 (Email)" "UUID"
+    printf "${YELLOW}%-5s %-25s %-40s${PLAIN}\n" "ID" "备注" "UUID"
     echo -e "${GRAY}-----------------------------------------------------------------------${PLAIN}"
     
     # 使用 jq to_entries 获取真实索引 (key=0,1,2...)
     jq -r '.inbounds[0].settings.clients | to_entries[] | "\(.key) \(.value.email // "无备注") \(.value.id)"' "$CONFIG_FILE" | while read idx email uuid; do
         if [ "$idx" -eq 0 ]; then
             # 索引 0 (管理员) -> 显示为红色的 #
-            printf "${RED}%-5s %-29s %-40s${PLAIN}\n" "#" "$email" "$uuid"
+            printf "${RED}%-5s %-23s %-40s${PLAIN}\n" "#" "$email" "$uuid"
         else
             # 其他索引 -> 直接显示数字 (如 1, 2, 3...)
-            printf "${GREEN}%-5s${PLAIN} %-29s %-40s\n" "$idx" "$email" "$uuid"
+            printf "${GREEN}%-5s${PLAIN} %-23s %-40s\n" "$idx" "$email" "$uuid"
         fi
     done
     echo -e "${GRAY}-----------------------------------------------------------------------${PLAIN}"
