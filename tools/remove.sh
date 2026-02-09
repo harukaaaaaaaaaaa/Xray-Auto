@@ -26,16 +26,26 @@ echo -e "${RED}=============================================================${PL
 echo -e "${YELLOW}警告：此操作将执行以下清理：${PLAIN}"
 echo -e "  1. 停止并移除 Xray 服务"
 echo -e "  2. 删除 Xray 核心文件、配置文件、日志"
-echo -e "  3. 删除所有管理脚本 (info, net, bbr, 等)"
+echo -e "  3. 删除所有管理脚本 (info, net...)"
 echo -e "  4. 清理残留的安装目录"
 echo -e "${RED}=============================================================${PLAIN}"
 echo ""
-read -p "确认要彻底卸载吗？[y/n]: " confirm
-
-if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    echo -e "${GREEN}操作已取消。${PLAIN}"
-    exit 0
-fi
+echo ""
+echo -ne "确认要彻底卸载吗？[y/n]: "
+while true; do
+    read -n 1 -r key
+    case "$key" in
+        [yY]) 
+            echo -e "\n${GREEN}>>> 操作已确认，开始卸载...${PLAIN}"
+            break 
+            ;;
+        [nN]) 
+            echo -e "\n${YELLOW}>>> 操作已取消。${PLAIN}"
+            exit 0 
+            ;;
+        *) ;;
+    esac
+done
 
 echo -e "\n${GREEN}>>> 正在停止服务...${PLAIN}"
 
@@ -51,29 +61,39 @@ rm -f /etc/systemd/system/xray.service
 rm -f /lib/systemd/system/xray.service
 
 # 删除核心与配置
-# 注意：这里会连同 config.json 和证书一起删除，确保彻底
-rm -rf /usr/local/bin/xray
-rm -rf /usr/local/etc/xray
+# 注意：这里会连同 config.json 和备份目录一起删除
+if [ -d "/usr/local/etc/xray" ]; then
+    rm -rf "/usr/local/etc/xray"
+    echo -e "   [OK] 已删除配置目录 (/usr/local/etc/xray)"
+fi
+
+if [ -f "/usr/local/bin/xray" ]; then
+    rm -f "/usr/local/bin/xray"
+    echo -e "   [OK] 已删除核心程序"
+fi
+
 rm -rf /usr/local/share/xray
 rm -rf /var/log/xray
 
-# 5. 删除工具脚本 (根据你之前截图中的工具列表)
+# 5. 删除工具脚本 (新增 user 和 backup)
 # 这一步非常关键，确保把 /usr/local/bin 下的快捷命令清理干净
 TOOLS=(
-    "xray"      # 核心命令
+    "user"      # 多用户管理
+    "backup"    # 备份与还原
     "info"      # 信息查看
     "net"       # 网络管理
     "bbr"       # BBR 管理
-    "bt"        # 宝塔面板
-    "f2b"       # Fail2ban
+    "bt"        # BT 流量
+    "f2b"       # Fail2ban防火墙
     "ports"     # 端口管理
-    "sni"       # SNI 检测
+    "sni"       # SNI 域名
     "swap"      # Swap 管理
-    "xw"        # 防火墙管理
-    "remove"    # 本脚本自己 (最后删除)
+    "xw"        # WARP 管理
+    "remove"    # 本脚本
     "uninstall" # 别名
 )
 
+echo -e "${GREEN}>>> 正在清理快捷指令...${PLAIN}"
 for tool in "${TOOLS[@]}"; do
     if [ -f "/usr/local/bin/$tool" ]; then
         rm -f "/usr/local/bin/$tool"
@@ -86,16 +106,15 @@ systemctl daemon-reload
 systemctl reset-failed
 
 # 7. (可选) 清理安装源码目录
-# 如果用户是在 /root/xray-install 运行的，可以选择是否删除它
-# 为了安全起见，通常不建议脚本自动删除用户当前的 working directory，
-# 但可以尝试删除标准的安装路径
+# 尝试删除标准的安装路径 /root/xray-install
 if [ -d "/root/xray-install" ]; then
     rm -rf "/root/xray-install"
+    echo -e "   [OK] 已删除安装源码目录"
 fi
 
 echo -e "\n${GREEN}=============================================${PLAIN}"
 echo -e "${GREEN}      卸载完成 (Uninstallation Complete)      ${PLAIN}"
 echo -e "${GREEN}=============================================${PLAIN}"
-echo -e "提示: 系统 BBR 设置与已安装的依赖 (如 git, curl) 未移除，"
+echo -e "提示: 系统 BBR 设置与已安装的依赖 (如 git, curl, jq) 未移除，"
 echo -e "      以免影响系统其他服务。"
 echo ""
