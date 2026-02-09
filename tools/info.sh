@@ -64,22 +64,22 @@ echo -e "  Public Key  : ${YELLOW}${PUBLIC_KEY}${PLAIN} (客户端)"
 echo -e "  Private Key : ${RED}${PRIVATE_KEY}${PLAIN} (服务端)"
 echo -e "-------------------------------------------------------------------"
 
-# 节点名称黄色高亮，视觉更清晰
+# 节点
 if [[ -n "$LINK_V4_VIS" ]]; then
     echo -e "${GREEN}>> IPv4 节点 (通用):${PLAIN}"
-    echo -e "${YELLOW}Vision${PLAIN}: ${LINK_V4_VIS}"
-    echo -e "${YELLOW}XHTTP ${PLAIN}: ${LINK_V4_XHT}"
+    echo -e "${YELLOW}Vision:${PLAIN} ${LINK_V4_VIS}"
+    echo -e "${YELLOW}XHTTP :${PLAIN} ${LINK_V4_XHT}"
     echo ""
 fi
 
 if [[ -n "$LINK_V6_VIS" ]]; then
-    echo -e "${GREEN}>> IPv6 节点 (专用):${PLAIN} ${GRAY}(需支持 v6 网络)${PLAIN}"
-    echo -e "${YELLOW}Vision${PLAIN}: ${LINK_V6_VIS}"
-    echo -e "${YELLOW}XHTTP ${PLAIN}: ${LINK_V6_XHT}"
+    echo -e "${GREEN}>> IPv6 节点 (专用):${PLAIN}"
+    echo -e "${YELLOW}Vision:${PLAIN} ${LINK_V6_VIS}"
+    echo -e "${YELLOW}XHTTP :${PLAIN} ${LINK_V6_XHT}"
     echo ""
 fi
 
-# 补全所有协议的二维码
+# 二维码
 read -n 1 -p "是否生成二维码? (y/n): " CHOICE
 echo ""
 if [[ "$CHOICE" =~ ^[yY]$ ]]; then
@@ -90,7 +90,7 @@ if [[ "$CHOICE" =~ ^[yY]$ ]]; then
         qrencode -t ANSIUTF8 "${LINK_V4_XHT}"
     fi
     
-    # 为了防止刷屏，IPv6 二维码依然需要二次确认
+    # 防止刷屏，IPv6 二维码依然需要二次确认
     if [[ -n "$LINK_V6_VIS" ]]; then
         echo ""
         read -n 1 -p "是否继续生成 IPv6 二维码? (y/n): " CHOICE_V6
@@ -104,9 +104,9 @@ if [[ "$CHOICE" =~ ^[yY]$ ]]; then
     fi
 fi
 
-echo -e "\n------------------------------------------------------------------"
-echo -e " 常用工具: "
-echo -e " ${YELLOW}info${PLAIN}  (信息) | ${YELLOW}net${PLAIN} (网络) | ${YELLOW}xw${PLAIN}  (WARP分流)| ${YELLOW}swap${PLAIN} (内存) | ${YELLOW}f2b${PLAIN}    (防火墙)"
-echo -e " ${YELLOW}ports${PLAIN} (端口) | ${YELLOW}bbr${PLAIN} (内核) | ${YELLOW}bt${PLAIN}  (封禁)    | ${YELLOW}sni${PLAIN}  (域名) | ${YELLOW}remove${PLAIN} (一键卸载)"
-echo -e "------------------------------------------------------------------"
+echo -e "\n------------------------------------------------------------------------------------"
+echo -e "  管理命令:"
+echo -e " ${YELLOW}info${PLAIN} (管理员信息) | ${YELLOW}net${PLAIN} (网络) | ${YELLOW}xw${PLAIN} (WARP分流) | ${YELLOW}swap${PLAIN}  (内存) | ${YELLOW}backup${PLAIN} (备份) | ${YELLOW}f2b${PLAIN}    (防火墙)"
+echo -e " ${YELLOW}user${PLAIN} (多用户管理) | ${YELLOW}sni${PLAIN} (域名) | ${YELLOW}bt${PLAIN} (BT流量)   | ${YELLOW}ports${PLAIN} (端口) | ${YELLOW}bbr${PLAIN}    (内核) | ${YELLOW}remove${PLAIN} (卸载)"
+echo -e "------------------------------------------------------------------------------------"
 echo ""
