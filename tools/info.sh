@@ -52,17 +52,20 @@ fi
 # --- 3. 界面展示 ---
 clear
 echo -e "${BLUE}===================================================================${PLAIN}"
-echo -e "${BLUE}       Xray 配置详情 (Dynamic Info)     ${PLAIN}"
+echo -e "${BLUE}  Xray 配置详情 (Dynamic Info)                                      ${PLAIN}"
 echo -e "${BLUE}===================================================================${PLAIN}"
 echo -e "  SSH 端口    : ${RED}${SSH_PORT}${PLAIN}"
 echo -e "  IPv4 地址   : ${GREEN}${IPV4}${PLAIN}"
 echo -e "  IPv6 地址   : ${GREEN}${IPV6}${PLAIN}"
-echo -e "  SNI 伪装域  : ${YELLOW}${SNI_HOST}${PLAIN}"
+echo -e "  SNI 伪装域   : ${YELLOW}${SNI_HOST}${PLAIN}"
 echo -e "  UUID        : ${BLUE}${UUID}${PLAIN}"
 echo -e "  Short ID    : ${BLUE}${SHORT_ID}${PLAIN}"
 echo -e "  Public Key  : ${YELLOW}${PUBLIC_KEY}${PLAIN} (客户端)"
 echo -e "  Private Key : ${RED}${PRIVATE_KEY}${PLAIN} (服务端)"
 echo -e "-------------------------------------------------------------------"
+echo -e "  Vision      : 端口: ${GREEN}${PORT_VISION}${PLAIN}    流控: ${GREEN}xtls-rprx-vision${PLAIN}"
+echo -e "  xhttp       : 端口: ${GREEN}${PORT_XHTTP}${PLAIN}   协议: ${GREEN}xhttp${PLAIN}   路径: ${GREEN}${XHTTP_PATH}${PLAIN}"
+echo -e "${BLUE}===================================================================${PLAIN}"
 
 # 节点
 if [[ -n "$LINK_V4_VIS" ]]; then
