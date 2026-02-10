@@ -146,26 +146,45 @@ view_logs() {
     if [ ! -f /var/log/fail2ban.log ]; then
         echo -e "${YELLOW}暂无日志文件 (服务可能刚安装)。${PLAIN}"
     else
-        # [核心优化] 使用 awk 进行格式化对齐
-        # 1. sprintf("%9s", $4): 将第4列(PID)强制设为9个字符宽，并右对齐。
-        #    这样 [123]: 和 [12345]: 中的冒号就会上下垂直对齐。
-        # 2. gsub: 给关键词上色。
         
         grep -E "(Ban|Unban)" /var/log/fail2ban.log 2>/dev/null | tail -n 20 | \
-        awk '{
-            # 1. 颜色高亮 (先上色，避免影响对齐逻辑)
-            gsub(/Unban/, "\033[32m&\033[0m");
-            gsub(/Ban/, "\033[31m&\033[0m");
-            
-            # 2. 对齐 PID 字段 (识别类似 [12345]: 的列)
-            if ($4 ~ /^\[.*\]:$/) {
-                # 右对齐，宽度设为 9 (PID通常5-6位，9足够容纳)
-                $4 = sprintf("%9s", $4)
-            }
-            
-            # 3. 打印重组后的行 (awk 会自动用整齐的空格连接各列)
-            print
-        }'
+awk '{
+    # 1. 颜色高亮 (先上色，让变量里带着颜色代码)
+    gsub(/Unban/, "\033[32m&\033[0m");
+    gsub(/Ban/, "\033[31m&\033[0m");
+
+    # 2. PID 对齐
+    if ($4 ~ /^\[.*\]:$/) {
+        $4 = sprintf("%9s", $4);
+    }
+
+    # 3. 日志格式: ... [sshd] Action IP
+    # [sshd] 是第6列, Action 是第7列(可能还有第8列), IP 在最后
+    
+    if ($7 == "Restore") {
+        # 情况 A: Restore Ban <IP>
+        # $7="Restore", $8="Ban", $9=IP
+        action = $7 " " $8;  # 组合动作词
+        ip = $9;
+        
+        # 交换位置：第7列放IP (左对齐15字符宽), 第8列放动作, 第9列清空
+        $7 = sprintf("%-15s", ip);
+        $8 = action;
+        $9 = ""; 
+    } else {
+        # 情况 B: Ban <IP> 或 Unban <IP>
+        # $7=Action, $8=IP
+        action = $7;
+        ip = $8;
+        
+        # 交换位置：第7列放IP, 第8列放动作
+        $7 = sprintf("%-15s", ip);
+        $8 = action;
+    }
+
+    # 4. 打印
+    print
+}'
     fi
     
     echo -e "---------------------------------------------------"
