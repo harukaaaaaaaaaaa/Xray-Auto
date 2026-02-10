@@ -64,7 +64,7 @@ echo -e "  Public Key  : ${YELLOW}${PUBLIC_KEY}${PLAIN} (客户端)"
 echo -e "  Private Key : ${RED}${PRIVATE_KEY}${PLAIN} (服务端)"
 echo -e "-------------------------------------------------------------------"
 echo -e "  Vision      : 端口: ${GREEN}${PORT_VISION}${PLAIN}    流控: ${GREEN}xtls-rprx-vision${PLAIN}"
-echo -e "  xhttp       : 端口: ${GREEN}${PORT_XHTTP}${PLAIN}   协议: ${GREEN}xhttp${PLAIN}   路径: ${GREEN}${XHTTP_PATH}${PLAIN}"
+echo -e "  xhttp       : 端口: ${GREEN}${PORT_XHTTP}${PLAIN}   协议: ${GREEN}xhttp${PLAIN}            路径: ${GREEN}${XHTTP_PATH}${PLAIN}"
 echo -e "${BLUE}===================================================================${PLAIN}"
 
 # 节点
