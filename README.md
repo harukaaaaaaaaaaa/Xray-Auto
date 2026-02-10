@@ -86,6 +86,7 @@ bash <(curl -sL https://raw.githubusercontent.com/ISFZY/Xray-Auto/main/tools/rem
 | `f2b` | **Fail2ban** | 查看封禁 IP、解封 IP、调整封禁策略。 |
 | `backup` | **备份与恢复** | 查询、备份，恢复配置。 |
 | `sniff` | **流量嗅探** | 开启/关闭 流量嗅探及其日志。 |
+| `zone` | **时区管理** | 时区与时间设置。 |
 | `remove` | **一键卸载** | 移除Xray及全部安装。 |
 ---
 
