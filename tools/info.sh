@@ -57,7 +57,7 @@ echo -e "${BLUE}================================================================
 echo -e "  SSH 端口    : ${RED}${SSH_PORT}${PLAIN}"
 echo -e "  IPv4 地址   : ${GREEN}${IPV4}${PLAIN}"
 echo -e "  IPv6 地址   : ${GREEN}${IPV6}${PLAIN}"
-echo -e "  SNI 伪装域   : ${YELLOW}${SNI_HOST}${PLAIN}"
+echo -e "  SNI 伪装域  : ${YELLOW}${SNI_HOST}${PLAIN}"
 echo -e "  UUID        : ${BLUE}${UUID}${PLAIN}"
 echo -e "  Short ID    : ${BLUE}${SHORT_ID}${PLAIN}"
 echo -e "  Public Key  : ${YELLOW}${PUBLIC_KEY}${PLAIN} (客户端)"
